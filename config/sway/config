@@ -1,0 +1,92 @@
+# PinePhone A64 - Sway Configuration
+# Terminal-centric mobile desktop environment
+
+# --- Variables ---
+set $mod Mod1
+set $term foot
+
+# --- Display Configuration ---
+# PinePhone DSI display: rotate for portrait mode and scale for readability
+output DSI-1 transform 90
+output DSI-1 scale 1.2
+
+# --- Input Configuration ---
+# Map touchscreen input to the DSI display
+# Robust fallback: map all touch devices to DSI-1
+input type:touch map_to_output DSI-1
+
+# Specific PinePhone touchscreen mapping
+input "1046:76:Goodix_Capacitive_TouchScreen" {
+    map_to_output DSI-1
+}
+
+# --- Auto-Launch Applications ---
+# Virtual keyboard: wvkbd with Cyberdeck theme, semi-transparent background
+exec wvkbd-mobintl --hidden -H 400 \
+    --bg 000000C0 \
+    --fg 00FF00 \
+    --fg-sp 008800 \
+    --press 004400 \
+    --text FFFFFF
+
+# Launch foot terminal on startup
+exec $term
+
+# --- Window Rules ---
+# Ensure foot tiles properly above the keyboard area
+for_window [app_id="foot"] focus
+for_window [app_id="wvkbd"] move down
+
+# --- Keybindings ---
+# Toggle virtual keyboard with Volume Up button
+bindsym XF86AudioRaiseVolume exec killall -SIGUSR1 wvkbd-mobintl
+
+# Volume Down for brightness control
+bindsym XF86AudioLowerVolume exec brightnessctl set 10%-
+bindsym Shift+XF86AudioLowerVolume exec brightnessctl set +10%
+
+# Launch terminal
+bindsym $mod+Return exec $term
+
+# Close focused window
+bindsym $mod+q kill
+
+# Window focus (touch-friendly with Alt+arrows)
+bindsym $mod+Left focus left
+bindsym $mod+Right focus right
+bindsym $mod+Up focus up
+bindsym $mod+Down focus down
+
+# Move windows
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Right move right
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Down move down
+
+# Layout toggles
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# Fullscreen
+bindsym $mod+f fullscreen
+
+# Floating toggle
+bindsym $mod+Shift+space floating toggle
+
+# Reload sway config
+bindsym $mod+Shift+c reload
+
+# Exit sway
+bindsym $mod+Shift+e exec swaymsg exit
+
+# --- Status Bar ---
+bar {
+    swaybar_command waybar
+}
+
+# --- Idle / Power ---
+# Turn off display after 300s, lock not configured (terminal-centric)
+exec swayidle -w \
+    timeout 300 'wlopm --off DSI-1' \
+    resume 'wlopm --on DSI-1'
